@@ -1,0 +1,22 @@
+{
+  "name": "social-media-agent",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:all": "npx -y concurrently \"npx -y n8n start\" \"next dev\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/genai": "^1.50.1",
+    "better-sqlite3": "^12.9.0",
+    "next": "^16.2.4",
+    "node-cron": "^4.2.1",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "sharp": "^0.34.5",
+    "sql.js": "^1.14.1"
+  }
+}

@@ -1,0 +1,189 @@
+{
+  "name": "Social Media — Generate Text",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-text",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "generate-text"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"system_instruction\": {\n    \"parts\": [\n      {\n        \"text\": \"You are a seasoned social media content writer for a professional organization. Your writing style is:\\n\\nVOICE & TONE:\\n- Warm, authentic, and conversational — like a knowledgeable friend, not a corporate press release\\n- Confident but not arrogant; helpful but not preachy\\n- Use active voice almost exclusively\\n- Mix short punchy sentences with longer flowing ones for natural rhythm\\n\\nSTRICT RULES — DO NOT:\\n- Use these words/phrases: harness, revolutionize, delve, game-changer, leverage, synergy, cutting-edge, robust, seamless, empower, elevate, foster, landscape, paradigm, unlock, unleash, dive in, in today's world, it's no secret that, in conclusion\\n- Use excessive exclamation marks (max 1 per post)\\n- Start with generic openers\\n- Use more than 2 emojis per LinkedIn post, or more than 5 per Instagram post\\n- Write generic filler content\\n\\nFORMAT GUIDELINES:\\n- LinkedIn: Professional yet personable. Use line breaks for readability. Include 2-3 relevant hashtags at the end. Ideal length: 150-300 words.\\n- Instagram: More casual and visual. Engaging first line (hook). Use relevant hashtags (5-10) at the end. Include a call-to-action. Ideal length: 80-200 words.\\n\\nIMPORTANT: Write like a real human who cares about their audience.\"\n      }\n    ]\n  },\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $json.body.prompt }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.85,\n    \"topP\": 0.92,\n    \"maxOutputTokens\": 1500\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000002",
+      "name": "Gemini — Generate Text",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $('Webhook').first().json.body.prompt }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.85,\n    \"topP\": 0.92,\n    \"maxOutputTokens\": 1500\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000003",
+      "name": "Gemini Fallback — 1.5 Flash",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 480],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-gemini-success",
+              "leftValue": "={{ $json.candidates }}",
+              "rightValue": "",
+              "operator": {
+                "type": "exists",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000004",
+      "name": "Gemini Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract text from Gemini API response and split by platform\nlet text = '';\ntry {\n  text = $input.first().json.candidates[0].content.parts[0].text || '';\n} catch(e) {\n  text = $input.first().json.text || $input.first().json.output || '';\n}\n\nconst platform = $('Webhook').first().json.body.platform || 'both';\n\nif (platform === 'both') {\n  const linkedinMatch = text.match(/===\\s*LINKEDIN\\s*===\\s*([\\s\\S]*?)(?:===\\s*INSTAGRAM\\s*===|$)/i);\n  const instagramMatch = text.match(/===\\s*INSTAGRAM\\s*===\\s*([\\s\\S]*?)$/i);\n\n  return [{\n    json: {\n      content: {\n        linkedin: linkedinMatch ? linkedinMatch[1].trim() : text,\n        instagram: instagramMatch ? instagramMatch[1].trim() : text,\n        raw: text\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    content: {\n      [platform]: text.trim(),\n      raw: text.trim()\n    }\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000005",
+      "name": "Parse Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 100]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fallback: Extract text from the fallback model response\nlet text = '';\ntry {\n  const json = $input.first().json;\n  if (json.candidates) {\n    text = json.candidates[0].content.parts[0].text || '';\n  }\n} catch(e) {}\n\nif (!text) {\n  // All models failed — return mock content\n  text = '=== LINKEDIN ===\\n[MOCK CONTENT - API LIMIT REACHED]\\nWe\\'ve hit the Gemini API rate limit! This is mock data so you can continue testing the UI and flow. 🚀\\n\\nAlways test with mock data if needed! #fallback #system\\n=== INSTAGRAM ===\\n[MOCK CONTENT - API LIMIT REACHED]\\nHitting API limits? No problem! 😅 This mock data ensures you can keep evaluating the app\\'s workflow and design.\\n\\nCheck your Google AI Studio plan to increase limits! 📸👇\\n#mockdata #testing #socialmedia';\n}\n\nconst platform = $('Webhook').first().json.body.platform || 'both';\n\nif (platform === 'both') {\n  const linkedinMatch = text.match(/===\\s*LINKEDIN\\s*===\\s*([\\s\\S]*?)(?:===\\s*INSTAGRAM\\s*===|$)/i);\n  const instagramMatch = text.match(/===\\s*INSTAGRAM\\s*===\\s*([\\s\\S]*?)$/i);\n  return [{\n    json: {\n      content: {\n        linkedin: linkedinMatch ? linkedinMatch[1].trim() : text,\n        instagram: instagramMatch ? instagramMatch[1].trim() : text,\n        raw: text\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    content: {\n      [platform]: text.trim(),\n      raw: text.trim()\n    }\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000006",
+      "name": "Parse Fallback Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 480]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000007",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1220, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Gemini — Generate Text", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gemini — Generate Text": {
+      "main": [
+        [
+          { "node": "Gemini Success?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gemini Success?": {
+      "main": [
+        [
+          { "node": "Parse Response", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Gemini Fallback — 1.5 Flash", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gemini Fallback — 1.5 Flash": {
+      "main": [
+        [
+          { "node": "Parse Fallback Response", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse Response": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse Fallback Response": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "social-media-agent" }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

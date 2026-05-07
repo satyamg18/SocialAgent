@@ -1,0 +1,244 @@
+{
+  "name": "Social Media — Generate Image",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-image",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "generate-image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"instances\": [\n    {\n      \"prompt\": \"Create a high-quality social media graphic. {{ $json.body.styleInstruction || 'Modern, clean, minimalist design with vibrant colors.' }}\\n\\nSubject: {{ $json.body.visualGist }}\\n\\nThe image should be professional, visually striking, and suitable for LinkedIn and Instagram. No text in the image.\"\n    }\n  ],\n  \"parameters\": {\n    \"sampleCount\": 1\n  }\n}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Imagen 3 — Generate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-imagen-success",
+              "leftValue": "={{ $json.predictions }}",
+              "rightValue": "",
+              "operator": {
+                "type": "exists",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000003",
+      "name": "Imagen Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract base64 image from Imagen 3 response\nconst predictions = $input.first().json.predictions;\nif (predictions && predictions.length > 0) {\n  const imageBytes = predictions[0].bytesBase64Encoded;\n  return [{\n    json: {\n      image: {\n        path: `data:image/png;base64,${imageBytes}`,\n        filename: `post-${Date.now()}.png`,\n        isDataUri: true,\n        isMock: false\n      }\n    }\n  }];\n}\n\n// Should not reach here, but fallback\nreturn [{\n  json: {\n    image: {\n      path: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1080&auto=format&fit=crop',\n      filename: 'mock-placeholder.jpg',\n      isDataUri: false,\n      isMock: true\n    }\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000004",
+      "name": "Extract Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-fast-generate-001:predict?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"instances\": [\n    {\n      \"prompt\": \"Create a high-quality social media graphic. {{ $('Webhook').first().json.body.styleInstruction || 'Modern, clean, minimalist design.' }}\\n\\nSubject: {{ $('Webhook').first().json.body.visualGist }}\\n\\nProfessional, visually striking. No text in the image.\"\n    }\n  ],\n  \"parameters\": {\n    \"sampleCount\": 1\n  }\n}",
+        "options": {
+          "timeout": 90000
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000005",
+      "name": "Imagen 3 Fast — Fallback",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 480],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-imagen-fast",
+              "leftValue": "={{ $json.predictions }}",
+              "rightValue": "",
+              "operator": {
+                "type": "exists",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000006",
+      "name": "Fast Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract base64 from Imagen 3 Fast response\nconst predictions = $input.first().json.predictions;\nif (predictions && predictions.length > 0) {\n  const imageBytes = predictions[0].bytesBase64Encoded;\n  return [{\n    json: {\n      image: {\n        path: `data:image/png;base64,${imageBytes}`,\n        filename: `post-${Date.now()}.png`,\n        isDataUri: true,\n        isMock: false\n      }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    image: {\n      path: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1080&auto=format&fit=crop',\n      filename: 'mock-placeholder.jpg',\n      isDataUri: false,\n      isMock: true\n    }\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000007",
+      "name": "Extract Fast Image",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 380]
+    },
+    {
+      "parameters": {
+        "jsCode": "// All image generation failed — return mock placeholder\nreturn [{\n  json: {\n    image: {\n      path: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1080&auto=format&fit=crop',\n      filename: 'mock-placeholder.jpg',\n      fullPath: null,\n      isDataUri: false,\n      isMock: true\n    }\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000008",
+      "name": "Mock Placeholder",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 600]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000009",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1260, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Imagen 3 — Generate", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Imagen 3 — Generate": {
+      "main": [
+        [
+          { "node": "Imagen Success?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Imagen Success?": {
+      "main": [
+        [
+          { "node": "Extract Image", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Imagen 3 Fast — Fallback", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Image": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Imagen 3 Fast — Fallback": {
+      "main": [
+        [
+          { "node": "Fast Success?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Fast Success?": {
+      "main": [
+        [
+          { "node": "Extract Fast Image", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Mock Placeholder", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Extract Fast Image": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Mock Placeholder": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "social-media-agent" }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

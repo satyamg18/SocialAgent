@@ -1,0 +1,189 @@
+{
+  "name": "Social Media — Generate Plan",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-plan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "generate-plan"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $json.body.prompt }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.8,\n    \"maxOutputTokens\": 3000\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000002",
+      "name": "Gemini — Generate Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 200],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-plan-success",
+              "leftValue": "={{ $json.candidates }}",
+              "rightValue": "",
+              "operator": {
+                "type": "exists",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Plan Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [740, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Gemini response for plan JSON\nlet text = '';\ntry {\n  text = $input.first().json.candidates[0].content.parts[0].text || '';\n} catch(e) {\n  text = '';\n}\n\n// Clean markdown code fences\ntext = text.trim().replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n\ntry {\n  const suggestions = JSON.parse(text);\n  return [{ json: { suggestions, raw: text } }];\n} catch (e) {\n  return [{\n    json: {\n      suggestions: [\n        {\n          day: 5,\n          platform: 'both',\n          title: '[PARSE ERROR] Content idea',\n          written_gist: 'The AI returned content that could not be parsed as JSON. Raw text is included below.',\n          visual_gist: 'Abstract graphic representing data processing'\n        }\n      ],\n      raw: text,\n      parseError: e.message\n    }\n  }];\n}"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000004",
+      "name": "Parse Plan JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={{ $env.GEMINI_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $('Webhook').first().json.body.prompt }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"temperature\": 0.8,\n    \"maxOutputTokens\": 3000\n  }\n}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000005",
+      "name": "Gemini Fallback Plan",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [500, 480],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse fallback Gemini response or return mock plan\nlet text = '';\ntry {\n  const json = $input.first().json;\n  if (json.candidates) {\n    text = json.candidates[0].content.parts[0].text || '';\n  }\n} catch(e) {}\n\nif (text) {\n  text = text.trim().replace(/```json\\s*/g, '').replace(/```\\s*/g, '').trim();\n  try {\n    const suggestions = JSON.parse(text);\n    return [{ json: { suggestions, raw: text } }];\n  } catch(e) {}\n}\n\n// All failed — mock plan\nreturn [{\n  json: {\n    suggestions: [\n      {\n        day: 5,\n        platform: 'both',\n        title: '[MOCK] System Update',\n        written_gist: 'We are hitting API rate limits. This is a mock post generated by the fallback system.',\n        visual_gist: 'Mock graphic showing a system alert.'\n      },\n      {\n        day: 12,\n        platform: 'linkedin',\n        title: '[MOCK] Industry Insights',\n        written_gist: 'Mock insights. Please check your Gemini rate limits or configure billing.',\n        visual_gist: 'Chart showing data trends.'\n      },\n      {\n        day: 19,\n        platform: 'instagram',\n        title: '[MOCK] Behind the Scenes',\n        written_gist: 'A fun look at how our team works day-to-day.',\n        visual_gist: 'Candid team photo in a modern office.'\n      },\n      {\n        day: 26,\n        platform: 'both',\n        title: '[MOCK] Weekly Wrap-Up',\n        written_gist: 'Summarizing the key highlights and milestones from this week.',\n        visual_gist: 'Infographic with weekly stats and achievements.'\n      }\n    ],\n    raw: 'MOCK DATA — All Gemini models unavailable',\n    isMock: true\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000006",
+      "name": "Parse Fallback Plan",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [980, 480]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000007",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1260, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Gemini — Generate Plan", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gemini — Generate Plan": {
+      "main": [
+        [
+          { "node": "Plan Success?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Plan Success?": {
+      "main": [
+        [
+          { "node": "Parse Plan JSON", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Gemini Fallback Plan", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Gemini Fallback Plan": {
+      "main": [
+        [
+          { "node": "Parse Fallback Plan", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse Plan JSON": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Parse Fallback Plan": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "social-media-agent" }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

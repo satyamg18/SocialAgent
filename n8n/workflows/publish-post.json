@@ -1,0 +1,262 @@
+{
+  "name": "Social Media — Publish Post",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "publish",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "publish"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Route to the correct platform(s)\nconst body = $input.first().json.body;\nconst platform = body.platform || 'both';\n\nreturn [{\n  json: {\n    ...body,\n    publishLinkedin: platform === 'linkedin' || platform === 'both',\n    publishInstagram: platform === 'instagram' || platform === 'both'\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000002",
+      "name": "Route Platform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "should-linkedin",
+              "leftValue": "={{ $json.publishLinkedin }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000003",
+      "name": "LinkedIn?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "should-instagram",
+              "leftValue": "={{ $json.publishInstagram }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Instagram?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 460]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/rest/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Route Platform').first().json.linkedinToken }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "LinkedIn-Version",
+              "value": "202602"
+            },
+            {
+              "name": "X-Restli-Protocol-Version",
+              "value": "2.0.0"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"author\": \"{{ $('Route Platform').first().json.authorUrn }}\",\n  \"commentary\": {{ JSON.stringify($('Route Platform').first().json.text) }},\n  \"visibility\": \"PUBLIC\",\n  \"distribution\": {\n    \"feedDistribution\": \"MAIN_FEED\",\n    \"targetEntities\": [],\n    \"thirdPartyDistributionChannels\": []\n  },\n  \"lifecycleState\": \"PUBLISHED\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000005",
+      "name": "LinkedIn — Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Route Platform').first().json.igUserId }}/media",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"image_url\": \"{{ $('Route Platform').first().json.imageUrl }}\",\n  \"caption\": {{ JSON.stringify($('Route Platform').first().json.text) }},\n  \"access_token\": \"{{ $('Route Platform').first().json.instagramToken }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000006",
+      "name": "IG — Create Container",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 460],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000007",
+      "name": "Wait for IG",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1160, 460]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/{{ $('Route Platform').first().json.igUserId }}/media_publish",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"creation_id\": \"{{ $('IG — Create Container').first().json.id }}\",\n  \"access_token\": \"{{ $('Route Platform').first().json.instagramToken }}\"\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000008",
+      "name": "IG — Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1360, 460],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge results from LinkedIn and Instagram\nconst results = { linkedin: null, instagram: null };\nconst errors = [];\n\n// Check LinkedIn result\ntry {\n  const li = $('LinkedIn — Post').first()?.json;\n  if (li && !li.error && !li.message) {\n    results.linkedin = { success: true, postId: li['x-restli-id'] || null };\n  } else if (li?.error || li?.message) {\n    errors.push('LinkedIn: ' + JSON.stringify(li.error || li.message));\n  }\n} catch(e) {\n  // LinkedIn was skipped\n}\n\n// Check Instagram result\ntry {\n  const ig = $('IG — Publish').first()?.json;\n  if (ig && ig.id) {\n    results.instagram = { postId: ig.id, success: true };\n  } else if (ig?.error) {\n    errors.push('Instagram: ' + JSON.stringify(ig.error));\n  }\n} catch(e) {\n  // Instagram was skipped\n}\n\nconst success = !!(results.linkedin || results.instagram);\n\nreturn [{\n  json: {\n    success,\n    results,\n    errors: errors.length > 0 ? errors : undefined\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000009",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000010",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Route Platform", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Route Platform": {
+      "main": [
+        [
+          { "node": "LinkedIn?", "type": "main", "index": 0 },
+          { "node": "Instagram?", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "LinkedIn?": {
+      "main": [
+        [
+          { "node": "LinkedIn — Post", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Merge Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Instagram?": {
+      "main": [
+        [
+          { "node": "IG — Create Container", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Merge Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "LinkedIn — Post": {
+      "main": [
+        [
+          { "node": "Merge Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "IG — Create Container": {
+      "main": [
+        [
+          { "node": "Wait for IG", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Wait for IG": {
+      "main": [
+        [
+          { "node": "IG — Publish", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "IG — Publish": {
+      "main": [
+        [
+          { "node": "Merge Results", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          { "node": "Respond to Webhook", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    { "name": "social-media-agent" }
+  ],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

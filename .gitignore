@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# vercel
+.vercel/
+
+# environment
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# database
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# generated images
+public/generated/*
+!public/generated/.gitkeep
+
+# n8n build artifacts
+n8n/workflows/ready-*.json
+n8n/workflows/all-workflows.json
+n8n/workflows/combine.ps1
+n8n/workflows/import-all.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
