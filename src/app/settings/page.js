@@ -9,7 +9,7 @@ function SettingsContent() {
   const searchParams = useSearchParams();
   const addToast = useToast();
   const [connections, setConnections] = useState({ facebook: false, instagram: false });
-  const [config, setConfig] = useState({ hasGeminiKey: false, n8nEnabled: false });
+  const [config, setConfig] = useState({ hasGroqKey: false, n8nEnabled: false });
   const [loading, setLoading] = useState(true);
 
   // Handle OAuth Redirects
@@ -138,12 +138,12 @@ function SettingsContent() {
           <div className="settings-keys-list">
             <div className="settings-key-row">
               <div>
-                <div className="text-sm" style={{ fontWeight: 600 }}>GEMINI_API_KEY</div>
-                <div className="text-xs text-muted">Google Gemini API for text & image generation</div>
+                <div className="text-sm" style={{ fontWeight: 600 }}>GROQ_API_KEY</div>
+                <div className="text-xs text-muted">Groq API for AI text generation (LLaMA 3)</div>
               </div>
-              <span className={`status-badge ${config.hasGeminiKey ? 'approved' : 'draft'}`}>
+              <span className={`status-badge ${config.hasGroqKey ? 'approved' : 'draft'}`}>
                 <span className="status-dot"></span>
-                {config.hasGeminiKey ? 'Configured' : 'Not Set'}
+                {config.hasGroqKey ? 'Configured' : 'Not Set'}
               </span>
             </div>
 
@@ -190,10 +190,10 @@ function SettingsContent() {
 
           <div className="settings-guide-list">
             <div className="settings-guide-step">
-              <h3 style={{ marginBottom: '8px', color: 'var(--accent-primary)' }}>Step 1: Gemini API Key</h3>
+              <h3 style={{ marginBottom: '8px', color: 'var(--accent-primary)' }}>Step 1: Groq API Key</h3>
               <p className="text-sm text-muted">
-                Visit <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-accent)' }}>Google AI Studio</a> →
-                Get API Key → Add to <code className="settings-code">.env.local</code> as <code className="settings-code">GEMINI_API_KEY</code>
+                Visit <a href="https://console.groq.com/" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-accent)' }}>Groq Console</a> →
+                Create API Key → Add to <code className="settings-code">.env.local</code> as <code className="settings-code">GROQ_API_KEY</code>
               </p>
             </div>
 

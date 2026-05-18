@@ -207,7 +207,7 @@ export async function smartGenText(gist, platform, tone) {
     }
   }
   // Fallback to direct API
-  console.log('[direct] Using direct Gemini API for text generation');
+  console.log('[direct] Using Groq API for text generation');
   const { generateWrittenContent } = await import('@/lib/ai/text-generator');
   return await generateWrittenContent(gist, platform, tone);
 }
@@ -221,7 +221,7 @@ export async function smartGenImage(visualGist, style) {
       console.warn('[n8n] Image generation failed, falling back to direct:', err.message);
     }
   }
-  console.log('[direct] Using direct Imagen/Gemini API for image generation');
+  console.log('[direct] Using Pollinations API for image generation');
   const { generateImage } = await import('@/lib/ai/image-generator');
   return await generateImage(visualGist, style);
 }
@@ -235,7 +235,7 @@ export async function smartGenPlan(month, year, theme, goals, targetAudience) {
       console.warn('[n8n] Plan generation failed, falling back to direct:', err.message);
     }
   }
-  console.log('[direct] Using direct Gemini API for plan generation');
+  console.log('[direct] Using Groq API for plan generation');
   const { generatePlanSuggestion } = await import('@/lib/ai/text-generator');
   return await generatePlanSuggestion(month, year, theme, goals, targetAudience);
 }

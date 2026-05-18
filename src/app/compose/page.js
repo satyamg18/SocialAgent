@@ -79,14 +79,28 @@ export default function ComposePage() {
       return;
     }
 
-    const styleInstructions = 'modern clean minimalist design vibrant colors professional social media graphic';
-    const enhancedPrompt = `professional social media graphic ${styleInstructions} subject: ${formData.visual_gist} no text in image`;
-    const encodedPrompt = encodeURIComponent(enhancedPrompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&seed=${Date.now()}`;
-
+    setImageLoading(true);
     setImageLoaded(false);
-    updateField('image_path', imageUrl);
-    addToast('Image loading — may take 10–15 seconds...', 'success');
+    try {
+      const res = await fetch('/api/generate/image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visualGist: formData.visual_gist }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Image generation failed');
+      }
+
+      const data = await res.json();
+      updateField('image_path', data.image?.path || data.image);
+      addToast('Image generated! It may take a moment to render.', 'success');
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setImageLoading(false);
+    }
   }
 
   async function handleSave(status = 'draft') {

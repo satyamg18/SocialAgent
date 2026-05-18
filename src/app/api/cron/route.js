@@ -46,11 +46,17 @@ export async function GET(request) {
         // Update status to publishing so we don't accidentally publish it twice if cron runs concurrently
         await updatePost(post.id, { status: 'publishing' });
 
+        const resolveImageUrl = (imgPath) => {
+          if (!imgPath) return null;
+          if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) return imgPath;
+          return `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${imgPath}`;
+        };
+
         const n8nResult = await smartPublish({
           platform: post.platform,
           text: post.written_content,
-          imageUrl: post.image_path ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${post.image_path}` : null,
-          imagePath: post.image_path ? path.join(process.cwd(), 'public', post.image_path) : null,
+          imageUrl: resolveImageUrl(post.image_path),
+          imagePath: post.image_path && !post.image_path.startsWith('http') ? path.join(process.cwd(), 'public', post.image_path) : null,
           facebookToken: facebookToken?.access_token || null,
           fbPageId: facebookToken?.user_id || null,
           instagramToken: instagramToken?.access_token || null,

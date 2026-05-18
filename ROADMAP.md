@@ -1,45 +1,44 @@
 # Social Media Agent — Product Roadmap
 
-This document outlines the remaining major features required to turn the Social Media Agent into a fully autonomous, production-ready product.
+This document outlines the major development phases of the Social Media Agent.
 
-## Phase 1: Social Media Authentication (Completed ✅)
-Without real authentication, the agent cannot publish content to actual social media accounts. We need to implement standard OAuth 2.0 flows.
+## Phase 1: Social Media Authentication ✅
 
-- [x] **Facebook OAuth Flow**
-  - Implement `/api/auth/facebook` (Redirect to Facebook consent screen)
-  - Implement `/api/auth/facebook/callback` (Exchange code for token, fetch user profile)
-  - Securely store the `access_token` and `user_id` in the `platform_tokens` database table.
-  - Update Settings UI to trigger the flow and display the authenticated user.
-- [x] **Instagram (Meta) OAuth Flow**
-  - Implement `/api/auth/instagram` (Redirect to Facebook login)
-  - Implement `/api/auth/instagram/callback` (Exchange code, fetch IG Business Account ID)
-  - Securely store the `access_token` and `user_id` in the database.
-  - Update Settings UI to trigger the flow and display the connected account.
+- [x] **Facebook OAuth Flow** — `/api/auth/facebook` + `/api/auth/facebook/callback`
+- [x] **Instagram (Meta) OAuth Flow** — `/api/auth/instagram` + callback
+- [x] Securely store `access_token` and `user_id` in `platform_tokens` table
+- [x] Settings UI with live connection status indicators
 
-## Phase 2: The Auto-Publishing Engine (Completed ✅)
-Currently, content is scheduled in the database but lacks a trigger to actually publish it at the designated time.
+## Phase 2: Auto-Publishing Engine ✅
 
-- [x] **Cron Scheduler**
-  - Create a Next.js `/api/cron` route designed to run every 15 minutes.
-  - Query the database for `status = 'approved'` where `scheduled_date` and `scheduled_time` are in the past.
-  - Trigger the `smartPublish` function for those posts.
-  - Update the database status to `published` or `failed`.
-  - Ensure compatibility with Vercel Cron or a similar cloud scheduler.
+- [x] **Cron Scheduler** (`/api/cron`) — Runs every 15 minutes
+- [x] Publishes `approved` posts whose scheduled time has passed
+- [x] Updates status to `published` or `failed`
+- [x] Compatible with Vercel Cron
 
-## Phase 3: Production Database Migration (Completed ✅)
-The app currently uses `better-sqlite3`. While excellent for local development, Vercel's ephemeral filesystem will wipe an SQLite file on every deployment.
+## Phase 3: Production Database Migration ✅
 
-- [x] **Cloud Database Integration**
-  - Migrate the data layer (`src/lib/db.js`) to support a cloud database.
-  - Setup **Vercel Postgres** (or Supabase/Neon).
-  - Use an ORM like Prisma or Drizzle for type-safe database migrations.
-  - Ensure a seamless environment variable switch (e.g., `DATABASE_URL` instead of a local `.db` file path).
+- [x] Hybrid data layer (`src/lib/db.js`) — SQLite local, Postgres production
+- [x] Connected to **Neon Postgres** via `DATABASE_URL`
+- [x] Automatic table creation and migration
 
-## Phase 4: Engagement Analytics (Completed ✅)
-Close the feedback loop by bringing real-world metrics back into the dashboard.
+## Phase 4: Engagement Analytics ✅
 
-- [x] **Analytics Sync Job**
-  - Create a daily background job to query the Facebook and Instagram APIs for published posts.
-  - Fetch Likes, Comments, Shares, and Impressions.
-- [x] **Dashboard Visualization**
-  - Update `src/app/page.js` to display engagement graphs and top-performing posts instead of just internal draft/approval stats.
+- [x] **Analytics Sync Job** (`/api/cron/analytics`) — Daily
+- [x] Fetches Likes, Comments, Shares, Impressions from Facebook & Instagram APIs
+- [x] Dashboard displays engagement stats
+
+## Phase 5: AI Migration — Gemini → Groq + Pollinations ✅
+
+- [x] Replaced Google Gemini SDK with **Groq SDK** (LLaMA 3.3 70B)
+- [x] 3-model fallback chain: `llama-3.3-70b-versatile` → `llama-3.1-8b-instant` → `mixtral-8x7b-32768`
+- [x] Replaced Google Imagen with **Pollinations AI** (Flux model)
+- [x] Added negative prompts to prevent text/watermark artifacts in images
+- [x] Added token usage logging for debugging API consumption
+- [x] Removed all `@google/genai` SDK dependencies from AI generators
+
+## Phase 6: Dashboard Enhancements ✅
+
+- [x] Published / Unpublished tab filtering on dashboard
+- [x] Posts sorted by creation date descending
+- [x] Post cards show "View" for published, "Edit" for drafts

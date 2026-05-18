@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getPostStats, getToken, hasGeminiKey } from '@/lib/db';
+import { getPostStats, getToken } from '@/lib/db';
 
 export async function GET() {
   try {
@@ -16,7 +16,7 @@ export async function GET() {
         instagramUser: instagramToken?.user_name || null,
       },
       config: {
-        hasGeminiKey: hasGeminiKey(),
+        hasGroqKey: !!process.env.GROQ_API_KEY,
         n8nEnabled: process.env.N8N_ENABLED !== 'false',
         hasFacebookKeys: !!(process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET),
         hasInstagramKeys: !!(process.env.INSTAGRAM_APP_ID && process.env.INSTAGRAM_APP_SECRET),

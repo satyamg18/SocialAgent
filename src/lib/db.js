@@ -286,7 +286,3 @@ export async function getPostStats() {
     }
   };
 }
-
-export function hasGeminiKey() {
-  return !!process.env.GEMINI_API_KEY;
-}
