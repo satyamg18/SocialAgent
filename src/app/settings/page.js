@@ -1,13 +1,31 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/Toast';
 
-export default function SettingsPage() {
+function SettingsContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const addToast = useToast();
   const [connections, setConnections] = useState({ linkedin: false, instagram: false });
   const [config, setConfig] = useState({ hasGeminiKey: false, n8nEnabled: false });
   const [loading, setLoading] = useState(true);
+
+  // Handle OAuth Redirects
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const success = searchParams.get('success');
+
+    if (error) {
+      addToast(`Authentication failed: ${error}`, 'error');
+      // Remove query param from URL
+      router.replace('/settings');
+    } else if (success) {
+      addToast('Platform connected successfully!', 'success');
+      router.replace('/settings');
+    }
+  }, [searchParams, router, addToast]);
 
   const fetchConnections = useCallback(async () => {
     try {
@@ -59,13 +77,14 @@ export default function SettingsPage() {
               {connections.linkedin ? (
                 <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
               ) : (
-                <button
+                <a
                   className="btn btn-secondary"
-                  onClick={() => addToast('Set up LinkedIn credentials in .env.local first, then use OAuth flow', 'info')}
+                  href="/api/auth/linkedin"
                   id="btn-connect-linkedin"
+                  style={{ textDecoration: 'none' }}
                 >
                   Connect LinkedIn
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -87,13 +106,14 @@ export default function SettingsPage() {
               {connections.instagram ? (
                 <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
               ) : (
-                <button
+                <a
                   className="btn btn-secondary"
-                  onClick={() => addToast('Set up Instagram/Meta credentials in .env.local first, then use OAuth flow', 'info')}
+                  href="/api/auth/instagram"
                   id="btn-connect-instagram"
+                  style={{ textDecoration: 'none' }}
                 >
                   Connect Instagram
-                </button>
+                </a>
               )}
             </div>
           </div>
@@ -196,5 +216,13 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center"><span className="spinner"></span> Loading settings...</div>}>
+      <SettingsContent />
+    </Suspense>
   );
 }

@@ -60,7 +60,9 @@ export default function DashboardPage() {
     { label: 'Pending Approval', value: stats?.stats?.pending || 0, icon: '⏳' },
     { label: 'Published', value: stats?.stats?.published || 0, icon: '🚀' },
     { label: 'Drafts', value: stats?.stats?.draft || 0, icon: '📄' },
-    { label: 'Approved', value: stats?.stats?.approved || 0, icon: '✅' },
+    { label: 'Total Likes', value: stats?.stats?.engagement?.likes || 0, icon: '❤️' },
+    { label: 'Total Comments', value: stats?.stats?.engagement?.comments || 0, icon: '💬' },
+    { label: 'Impressions', value: stats?.stats?.engagement?.impressions || 0, icon: '👁️' },
   ];
 
   return (
@@ -177,6 +179,13 @@ export default function DashboardPage() {
                     <span className="status-dot"></span>
                     {post.status.replace('_', ' ')}
                   </span>
+                  
+                  {post.status === 'published' && (post.likes > 0 || post.comments > 0) && (
+                    <span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--status-failed)', marginLeft: '8px', border: 'none' }}>
+                      ❤️ {post.likes || 0} &nbsp; 💬 {post.comments || 0}
+                    </span>
+                  )}
+
                   <div style={{ width: '100%', marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
                     <a href={`/edit/${post.id}`} className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>✏️ Edit</a>
                   </div>

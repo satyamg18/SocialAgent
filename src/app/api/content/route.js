@@ -11,7 +11,7 @@ export async function GET(request) {
       year: searchParams.get('year') || undefined,
     };
 
-    const posts = getAllPosts(filters);
+    const posts = await getAllPosts(filters);
     return NextResponse.json({ posts });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -26,7 +26,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    const post = createPost(data);
+    const post = await createPost(data);
     return NextResponse.json({ post }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

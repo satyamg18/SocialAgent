@@ -13,7 +13,7 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Post ID is required' }, { status: 400 });
     }
 
-    const post = getPostById(postId);
+    const post = await getPostById(postId);
     if (!post) {
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
@@ -23,8 +23,8 @@ export async function POST(request) {
     }
 
     // Gather token info
-    const linkedinToken = getToken('linkedin');
-    const instagramToken = getToken('instagram');
+    const linkedinToken = await getToken('linkedin');
+    const instagramToken = await getToken('instagram');
 
     // Try n8n first
     const n8nResult = await smartPublish({
@@ -43,7 +43,7 @@ export async function POST(request) {
       const hasSuccess = n8nResult.results?.linkedin || n8nResult.results?.instagram;
       const newStatus = hasSuccess ? 'published' : 'failed';
 
-      updatePost(postId, {
+      await updatePost(postId, {
         status: newStatus,
         linkedin_post_id: n8nResult.results?.linkedin?.postId || null,
         instagram_post_id: n8nResult.results?.instagram?.postId || null,
@@ -114,7 +114,7 @@ export async function POST(request) {
     const hasSuccess = results.linkedin || results.instagram;
     const newStatus = hasSuccess ? 'published' : 'failed';
 
-    updatePost(postId, {
+    await updatePost(postId, {
       status: newStatus,
       linkedin_post_id: results.linkedin?.postId || null,
       instagram_post_id: results.instagram?.postId || null,

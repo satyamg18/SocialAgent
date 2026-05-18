@@ -9,11 +9,11 @@ export async function GET(request) {
     const year = searchParams.get('year');
 
     if (month && year) {
-      const plan = getMonthlyPlan(Number(month), Number(year));
+      const plan = await getMonthlyPlan(Number(month), Number(year));
       return NextResponse.json({ plan });
     }
 
-    const plans = getAllMonthlyPlans();
+    const plans = await getAllMonthlyPlans();
     return NextResponse.json({ plans });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -39,7 +39,7 @@ export async function POST(request) {
       );
 
       // Save plan with suggestions
-      const plan = upsertMonthlyPlan({
+      const plan = await upsertMonthlyPlan({
         ...data,
         suggested_posts: JSON.stringify(suggestions),
       });
@@ -47,7 +47,7 @@ export async function POST(request) {
       return NextResponse.json({ plan, suggestions });
     }
 
-    const plan = upsertMonthlyPlan(data);
+    const plan = await upsertMonthlyPlan(data);
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
     console.error('[api/plan] Error:', error.message);
