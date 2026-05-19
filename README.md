@@ -1,4 +1,4 @@
-# 🤖 SocialPilot — AI Social Media Automation Agent
+# 🤖 SocialPilot — Social Media Agent
 
 An autonomous, AI-powered social media manager built with Next.js. The agent handles content generation, visual assets, intelligent scheduling, automated publishing, and engagement tracking across **Facebook** and **Instagram**.
 
