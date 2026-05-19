@@ -1,6 +1,6 @@
 // n8n Webhook Client with automatic fallback to direct API calls
 // If n8n is running → routes through n8n workflows
-// If n8n is down → falls back to direct Gemini/Facebook/Instagram calls
+// If n8n is down → falls back to direct Groq/Pollinations/Facebook/Instagram calls
 
 const N8N_WEBHOOK_BASE = process.env.N8N_WEBHOOK_BASE || 'http://localhost:5678/webhook';
 const N8N_ENABLED = process.env.N8N_ENABLED !== 'false'; // enabled by default

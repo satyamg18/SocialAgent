@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAllPosts, updatePost, getToken } from '@/lib/db';
-import { smartPublish } from '@/lib/n8n';
-import path from 'path';
+import { getAllPosts } from '@/lib/db';
 
 // Vercel Cron sends a Bearer token. We verify it to ensure only Vercel can trigger this.
 // For local testing, you can bypass this by setting CRON_SECRET=test in your .env.local
@@ -34,7 +32,7 @@ export async function GET(request) {
 
     const results = [];
 
-    // 3. Publish each due post
+    // 3. Publish each due post via the /api/publish endpoint
     for (const post of postsToPublish) {
       try {
         console.log(`[Cron] Publishing post ${post.id}: ${post.title}`);

@@ -1,0 +1,16 @@
+name: Auto-Publishing Cron
+
+on:
+  schedule:
+    # Runs every 15 minutes to bypass Vercel's daily limit on the free Hobby tier
+    - cron: '*/15 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger SocialPilot Auto-Publish
+        run: |
+          curl -X GET "https://social-media-agent-nine.vercel.app/api/cron" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

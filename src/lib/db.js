@@ -108,6 +108,7 @@ async function initPostgresTables(pool) {
   // Migrate existing tables
   try { await pool.query('ALTER TABLE posts ADD COLUMN facebook_post_id TEXT;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN instagram_post_id TEXT;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN published_at TIMESTAMP;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN comments INTEGER DEFAULT 0;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN shares INTEGER DEFAULT 0;'); } catch (e) {}
@@ -141,6 +142,7 @@ function initSqliteTables(db) {
   // Migrate existing tables
   try { db.exec('ALTER TABLE posts ADD COLUMN facebook_post_id TEXT;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN instagram_post_id TEXT;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN published_at DATETIME;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN comments INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN shares INTEGER DEFAULT 0;'); } catch (e) {}

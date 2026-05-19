@@ -59,14 +59,6 @@ export async function GET(request) {
         }
       }
 
-      // If neither platform is fully connected/working during testing, let's inject some mock engagement 
-      // just so the dashboard isn't completely empty for the user's demo!
-      if (!facebookToken?.access_token && !instagramToken?.access_token) {
-         // Fake growth over time based on ID and day
-         likes = Math.floor(Math.random() * 50) + 10;
-         comments = Math.floor(Math.random() * 10);
-         impressions = likes * 15;
-      }
 
       // 4. Update the database
       await updatePost(post.id, {

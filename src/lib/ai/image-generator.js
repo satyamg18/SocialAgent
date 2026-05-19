@@ -28,12 +28,17 @@ export async function generateImage(visualGist, style = 'modern') {
 
   // Clean up gist and formulate a strong descriptive prompt
   const cleanGist = visualGist.replace(/subject:/gi, '').trim();
-  const enhancedPrompt = `${cleanGist}, ${styleInstructions[style] || styleInstructions.modern}, masterpiece, highly detailed, professional social media graphic`;
+  // Removed 'social media graphic' because that phrase tells the AI to generate text overlays
+  const enhancedPrompt = `${cleanGist}, ${styleInstructions[style] || styleInstructions.modern}, masterpiece, highly detailed photography, clean composition`;
   
   const encodedPrompt = encodeURIComponent(enhancedPrompt);
   // Add negative prompt to strongly discourage text, watermarks, and messy artifacts
-  const negativePrompt = encodeURIComponent("text, words, letters, signature, watermark, messy, ugly, poorly drawn, abstract chaos, blurry, deformed");
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&enhance=true&negative=${negativePrompt}`;
+  const negativePrompt = encodeURIComponent("text, font, letters, typography, words, signature, watermark, messy, ugly, abstract chaos, blurry, deformed");
+  
+  // Removed enhance=true because the LLM enhancer often hallucinates text into the prompt
+  // Added a random seed to ensure fresh results every time
+  const seed = Math.floor(Math.random() * 999999999);
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&seed=${seed}&negative=${negativePrompt}`;
 
   console.log('[image-generator] Returning Pollinations URL — image renders on load');
   return {

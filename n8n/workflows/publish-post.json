@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Route to the correct platform(s)\nconst body = $input.first().json.body;\nconst platform = body.platform || 'both';\n\nreturn [{\n  json: {\n    ...body,\n    publishFacebook: platform === 'facebook' || platform === 'both',\n    publishInstagram: platform === 'instagram' || platform === 'both'\n  }\n}];"
+        "jsCode": "const body = $input.first().json.body;\nconst platform = body.platform || 'both';\nlet fbText = body.text;\nlet igText = body.text;\nif (platform === 'both') {\n  const fbMatch = body.text.match(/===\\s*FACEBOOK\\s*===([\\s\\S]*?)(?:===\\s*INSTAGRAM\\s*===|$)/i);\n  const igMatch = body.text.match(/===\\s*INSTAGRAM\\s*===([\\s\\S]*?)(?:===\\s*FACEBOOK\\s*===|$)/i);\n  if (fbMatch && fbMatch[1].trim()) fbText = fbMatch[1].trim();\n  if (igMatch && igMatch[1].trim()) igText = igMatch[1].trim();\n}\nreturn [{ json: { ...body, fbText, igText, publishFacebook: platform === 'facebook' || platform === 'both', publishInstagram: platform === 'instagram' || platform === 'both' } }];"
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000002",
       "name": "Route Platform",
@@ -28,17 +28,7 @@
     {
       "parameters": {
         "conditions": {
-          "conditions": [
-            {
-              "id": "should-facebook",
-              "leftValue": "={{ $json.publishFacebook }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ]
+          "conditions": [{ "id": "should-facebook", "leftValue": "={{ $json.publishFacebook }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
         }
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000003",
@@ -50,17 +40,7 @@
     {
       "parameters": {
         "conditions": {
-          "conditions": [
-            {
-              "id": "should-instagram",
-              "leftValue": "={{ $json.publishInstagram }}",
-              "rightValue": true,
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ]
+          "conditions": [{ "id": "should-instagram", "leftValue": "={{ $json.publishInstagram }}", "rightValue": true, "operator": { "type": "boolean", "operation": "equals" } }]
         }
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000004",
@@ -71,40 +51,12 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.facebook.com/rest/posts",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "=Bearer {{ $('Route Platform').first().json.facebookToken }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            },
-            {
-              "name": "Facebook-Version",
-              "value": "202602"
-            },
-            {
-              "name": "X-Restli-Protocol-Version",
-              "value": "2.0.0"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"author\": \"{{ $('Route Platform').first().json.authorUrn }}\",\n  \"commentary\": {{ JSON.stringify($('Route Platform').first().json.text) }},\n  \"visibility\": \"PUBLIC\",\n  \"distribution\": {\n    \"feedDistribution\": \"MAIN_FEED\",\n    \"targetEntities\": [],\n    \"thirdPartyDistributionChannels\": []\n  },\n  \"lifecycleState\": \"PUBLISHED\"\n}",
-        "options": {
-          "timeout": 30000
-        }
+        "jsCode": "// Determine if this is an image or text post and call the correct Facebook Graph API endpoint\nconst data = $('Route Platform').first().json;\nconst pageId = data.fbPageId;\nconst token = data.facebookToken;\nconst text = data.fbText;\nconst imageUrl = data.imageUrl;\n\nlet result;\nif (imageUrl) {\n  // Image post via /{page-id}/photos\n  const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/photos`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ url: imageUrl, message: text, access_token: token })\n  });\n  result = await res.json();\n} else {\n  // Text post via /{page-id}/feed\n  const res = await fetch(`https://graph.facebook.com/v19.0/${pageId}/feed`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ message: text, access_token: token })\n  });\n  result = await res.json();\n}\n\nreturn [{ json: result }];"
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000005",
       "name": "Facebook — Post",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [960, 160],
       "continueOnFail": true
     },
@@ -114,10 +66,8 @@
         "url": "=https://graph.facebook.com/v19.0/{{ $('Route Platform').first().json.igUserId }}/media",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"image_url\": \"{{ $('Route Platform').first().json.imageUrl }}\",\n  \"caption\": {{ JSON.stringify($('Route Platform').first().json.text) }},\n  \"access_token\": \"{{ $('Route Platform').first().json.instagramToken }}\"\n}",
-        "options": {
-          "timeout": 30000
-        }
+        "jsonBody": "={\n  \"image_url\": \"{{ $('Route Platform').first().json.imageUrl }}\",\n  \"caption\": {{ JSON.stringify($('Route Platform').first().json.igText) }},\n  \"access_token\": \"{{ $('Route Platform').first().json.instagramToken }}\"\n}",
+        "options": { "timeout": 30000 }
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000006",
       "name": "IG — Create Container",
@@ -127,10 +77,7 @@
       "continueOnFail": true
     },
     {
-      "parameters": {
-        "amount": 5,
-        "unit": "seconds"
-      },
+      "parameters": { "amount": 5, "unit": "seconds" },
       "id": "a1b2c3d4-0004-4000-8000-000000000007",
       "name": "Wait for IG",
       "type": "n8n-nodes-base.wait",
@@ -144,9 +91,7 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"creation_id\": \"{{ $('IG — Create Container').first().json.id }}\",\n  \"access_token\": \"{{ $('Route Platform').first().json.instagramToken }}\"\n}",
-        "options": {
-          "timeout": 30000
-        }
+        "options": { "timeout": 30000 }
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000008",
       "name": "IG — Publish",
@@ -157,7 +102,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Merge results from Facebook and Instagram\nconst results = { facebook: null, instagram: null };\nconst errors = [];\n\n// Check Facebook result\ntry {\n  const li = $('Facebook — Post').first()?.json;\n  if (li && !li.error && !li.message) {\n    results.facebook = { success: true, postId: li['x-restli-id'] || null };\n  } else if (li?.error || li?.message) {\n    errors.push('Facebook: ' + JSON.stringify(li.error || li.message));\n  }\n} catch(e) {\n  // Facebook was skipped\n}\n\n// Check Instagram result\ntry {\n  const ig = $('IG — Publish').first()?.json;\n  if (ig && ig.id) {\n    results.instagram = { postId: ig.id, success: true };\n  } else if (ig?.error) {\n    errors.push('Instagram: ' + JSON.stringify(ig.error));\n  }\n} catch(e) {\n  // Instagram was skipped\n}\n\nconst success = !!(results.facebook || results.instagram);\n\nreturn [{\n  json: {\n    success,\n    results,\n    errors: errors.length > 0 ? errors : undefined\n  }\n}];"
+        "jsCode": "const results = { facebook: null, instagram: null };\nconst errors = [];\ntry {\n  const fb = $('Facebook — Post').first()?.json;\n  if (fb && (fb.id || fb.post_id)) {\n    results.facebook = { success: true, postId: fb.id || fb.post_id };\n  } else if (fb?.error) {\n    errors.push('Facebook: ' + JSON.stringify(fb.error));\n  }\n} catch(e) {}\ntry {\n  const ig = $('IG — Publish').first()?.json;\n  if (ig && ig.id) {\n    results.instagram = { postId: ig.id, success: true };\n  } else if (ig?.error) {\n    errors.push('Instagram: ' + JSON.stringify(ig.error));\n  }\n} catch(e) {}\nconst success = !!(results.facebook || results.instagram);\nreturn [{ json: { success, results, errors: errors.length > 0 ? errors : undefined } }];"
       },
       "id": "a1b2c3d4-0004-4000-8000-000000000009",
       "name": "Merge Results",
@@ -166,10 +111,7 @@
       "position": [1560, 300]
     },
     {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ JSON.stringify($json) }}"
-      },
+      "parameters": { "respondWith": "json", "responseBody": "={{ JSON.stringify($json) }}" },
       "id": "a1b2c3d4-0004-4000-8000-000000000010",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
@@ -178,85 +120,17 @@
     }
   ],
   "connections": {
-    "Webhook": {
-      "main": [
-        [
-          { "node": "Route Platform", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Route Platform": {
-      "main": [
-        [
-          { "node": "Facebook?", "type": "main", "index": 0 },
-          { "node": "Instagram?", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Facebook?": {
-      "main": [
-        [
-          { "node": "Facebook — Post", "type": "main", "index": 0 }
-        ],
-        [
-          { "node": "Merge Results", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Instagram?": {
-      "main": [
-        [
-          { "node": "IG — Create Container", "type": "main", "index": 0 }
-        ],
-        [
-          { "node": "Merge Results", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Facebook — Post": {
-      "main": [
-        [
-          { "node": "Merge Results", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "IG — Create Container": {
-      "main": [
-        [
-          { "node": "Wait for IG", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Wait for IG": {
-      "main": [
-        [
-          { "node": "IG — Publish", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "IG — Publish": {
-      "main": [
-        [
-          { "node": "Merge Results", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Merge Results": {
-      "main": [
-        [
-          { "node": "Respond to Webhook", "type": "main", "index": 0 }
-        ]
-      ]
-    }
+    "Webhook": { "main": [[{ "node": "Route Platform", "type": "main", "index": 0 }]] },
+    "Route Platform": { "main": [[{ "node": "Facebook?", "type": "main", "index": 0 }, { "node": "Instagram?", "type": "main", "index": 0 }]] },
+    "Facebook?": { "main": [[{ "node": "Facebook — Post", "type": "main", "index": 0 }], [{ "node": "Merge Results", "type": "main", "index": 0 }]] },
+    "Instagram?": { "main": [[{ "node": "IG — Create Container", "type": "main", "index": 0 }], [{ "node": "Merge Results", "type": "main", "index": 0 }]] },
+    "Facebook — Post": { "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]] },
+    "IG — Create Container": { "main": [[{ "node": "Wait for IG", "type": "main", "index": 0 }]] },
+    "Wait for IG": { "main": [[{ "node": "IG — Publish", "type": "main", "index": 0 }]] },
+    "IG — Publish": { "main": [[{ "node": "Merge Results", "type": "main", "index": 0 }]] },
+    "Merge Results": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
   },
   "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "tags": [
-    { "name": "social-media-agent" }
-  ],
-  "meta": {
-    "templateCredsSetupCompleted": false
-  }
+  "settings": { "executionOrder": "v1" },
+  "tags": [{ "name": "social-media-agent" }]
 }
