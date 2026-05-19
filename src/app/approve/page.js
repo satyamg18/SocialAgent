@@ -120,10 +120,10 @@ export default function ApprovePage() {
       const data = await res.json();
 
       if (data.success) {
-        addToast('Post published successfully!', 'success');
+        addToast('Post published successfully! 🚀', 'success');
         fetchAllTabs();
       } else {
-        addToast(`Publishing had issues: ${data.errors?.join(', ') || 'Unknown error'}`, 'error');
+        addToast(`Publish failed: ${data.error || data.errors?.join(', ') || 'Unknown error'}`, 'error');
       }
     } catch (err) {
       addToast(err.message, 'error');

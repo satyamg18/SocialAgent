@@ -32,8 +32,8 @@ export async function generateImage(visualGist, style = 'modern') {
   
   const encodedPrompt = encodeURIComponent(enhancedPrompt);
   // Add negative prompt to strongly discourage text, watermarks, and messy artifacts
-  const negativePrompt = encodeURIComponent("text, words, letters, signature, watermark, messy, ugly, poorly drawn, abstract chaos");
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&model=flux&negative=${negativePrompt}`;
+  const negativePrompt = encodeURIComponent("text, words, letters, signature, watermark, messy, ugly, poorly drawn, abstract chaos, blurry, deformed");
+  const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1080&height=1080&nologo=true&enhance=true&negative=${negativePrompt}`;
 
   console.log('[image-generator] Returning Pollinations URL — image renders on load');
   return {

@@ -70,6 +70,16 @@ export async function POST(request) {
     const results = { facebook: null, instagram: null };
     const errors = [];
 
+    // Parse platform-specific text if applicable
+    let fbText = post.written_content;
+    let igText = post.written_content;
+    if (post.platform === 'both') {
+      const fbMatch = post.written_content.match(/===\s*FACEBOOK\s*===([\s\S]*?)(?:===\s*INSTAGRAM\s*===|$)/i);
+      const igMatch = post.written_content.match(/===\s*INSTAGRAM\s*===([\s\S]*?)(?:===\s*FACEBOOK\s*===|$)/i);
+      if (fbMatch && fbMatch[1].trim()) fbText = fbMatch[1].trim();
+      if (igMatch && igMatch[1].trim()) igText = igMatch[1].trim();
+    }
+
     // Publish to Facebook
     if (post.platform === 'facebook' || post.platform === 'both') {
       if (facebookToken) {
@@ -78,11 +88,11 @@ export async function POST(request) {
           if (post.image_path) {
             const imageUrl = resolveImageUrl(post.image_path);
             result = await createFacebookImagePost(
-              facebookToken.access_token, facebookToken.user_id, post.written_content, imageUrl
+              facebookToken.access_token, facebookToken.user_id, fbText, imageUrl
             );
           } else {
             result = await createFacebookTextPost(
-              facebookToken.access_token, facebookToken.user_id, post.written_content
+              facebookToken.access_token, facebookToken.user_id, fbText
             );
           }
           results.facebook = result;
@@ -103,7 +113,7 @@ export async function POST(request) {
           } else {
             const imageUrl = resolveImageUrl(post.image_path);
             const result = await createInstagramImagePost(
-              instagramToken.access_token, instagramToken.user_id, imageUrl, post.written_content
+              instagramToken.access_token, instagramToken.user_id, imageUrl, igText
             );
             results.instagram = result;
           }

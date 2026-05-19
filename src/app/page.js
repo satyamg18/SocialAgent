@@ -59,7 +59,7 @@ export default function DashboardPage() {
         addToast('Post published successfully! 🚀', 'success');
         await refreshData();
       } else {
-        addToast(`Publish failed: ${data.errors?.join(', ') || 'Unknown error'}`, 'error');
+        addToast(`Publish failed: ${data.error || data.errors?.join(', ') || 'Unknown error'}`, 'error');
       }
     } catch (err) {
       addToast(err.message, 'error');

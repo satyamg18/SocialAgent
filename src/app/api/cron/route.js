@@ -32,10 +32,6 @@ export async function GET(request) {
       return NextResponse.json({ message: 'No posts scheduled to publish at this time.', count: 0 });
     }
 
-    // Gather token info (only once per cron run)
-    const facebookToken = await getToken('facebook');
-    const instagramToken = await getToken('instagram');
-
     const results = [];
 
     // 3. Publish each due post
@@ -43,41 +39,22 @@ export async function GET(request) {
       try {
         console.log(`[Cron] Publishing post ${post.id}: ${post.title}`);
         
-        // Update status to publishing so we don't accidentally publish it twice if cron runs concurrently
-        await updatePost(post.id, { status: 'publishing' });
-
-        const resolveImageUrl = (imgPath) => {
-          if (!imgPath) return null;
-          if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) return imgPath;
-          return `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${imgPath}`;
-        };
-
-        const n8nResult = await smartPublish({
-          platform: post.platform,
-          text: post.written_content,
-          imageUrl: resolveImageUrl(post.image_path),
-          imagePath: post.image_path && !post.image_path.startsWith('http') ? path.join(process.cwd(), 'public', post.image_path) : null,
-          facebookToken: facebookToken?.access_token || null,
-          fbPageId: facebookToken?.user_id || null,
-          instagramToken: instagramToken?.access_token || null,
-          igUserId: instagramToken?.user_id || null,
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `http://${request.headers.get('host')}`;
+        const publishRes = await fetch(`${baseUrl}/api/publish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: post.id })
         });
-
-        if (n8nResult.success) {
-          await updatePost(post.id, {
-            status: 'published',
-            published_at: new Date().toISOString(),
-            facebook_post_id: n8nResult.facebookPostId || null,
-            instagram_post_id: n8nResult.instagramPostId || null,
-          });
-          results.push({ id: post.id, status: 'success' });
+        
+        const publishData = await publishRes.json();
+        
+        if (publishRes.ok && publishData.success) {
+           results.push({ id: post.id, status: 'success' });
         } else {
-          throw new Error(n8nResult.error || 'Unknown publishing error');
+           results.push({ id: post.id, status: 'failed', error: publishData.error || publishData.errors || 'Unknown publish error' });
         }
-
       } catch (err) {
-        console.error(`[Cron] Failed to publish post ${post.id}:`, err);
-        await updatePost(post.id, { status: 'failed' });
+        console.error(`[Cron] Failed to trigger publish for post ${post.id}:`, err);
         results.push({ id: post.id, status: 'failed', error: err.message });
       }
     }
