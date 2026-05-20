@@ -41,35 +41,48 @@ An autonomous, AI-powered social media manager built with Next.js. The agent han
 
 ## 📁 Project Structure
 
-All key directory and file links are linked to their absolute paths:
+Below is the directory tree of the key source files. Click on any file or folder to navigate directly to it:
 
-- [src/app/page.js](./src/app/page.js) — Dashboard with Published/Unpublished tabs
-- [src/app/compose/page.js](./src/app/compose/page.js) — AI post composer (4-step wizard)
-- [src/app/approve/page.js](./src/app/approve/page.js) — Approval queue with publish & reschedule
-- [src/app/calendar/page.js](./src/app/calendar/page.js) — Calendar view of scheduled posts
-- [src/app/plan/page.js](./src/app/plan/page.js) — Monthly AI content planner
-- [src/app/settings/page.js](./src/app/settings/page.js) — OAuth connections & API key status
-- [src/app/edit/[id]/page.js](./src/app/edit/[id]/page.js) — Post editor
-- [src/app/privacy/page.js](./src/app/privacy/page.js) — Privacy Policy (Meta compliance)
-- [src/app/data-deletion/page.js](./src/app/data-deletion/page.js) — Data Deletion Instructions (Meta compliance)
-- [src/app/api/auth/facebook/route.js](./src/app/api/auth/facebook/route.js) — Facebook OAuth flow (init + callback)
-- [src/app/api/auth/instagram/route.js](./src/app/api/auth/instagram/route.js) — Instagram OAuth flow (init + callback)
-- [src/app/api/auth/disconnect/route.js](./src/app/api/auth/disconnect/route.js) — Disconnect Facebook/Instagram connection endpoint
-- [src/app/api/generate/text/route.js](./src/app/api/generate/text/route.js) — AI text generation endpoint
-- [src/app/api/generate/image/route.js](./src/app/api/generate/image/route.js) — AI image generation endpoint
-- [src/app/api/content/route.js](./src/app/api/content/route.js) — CRUD for posts
-- [src/app/api/publish/route.js](./src/app/api/publish/route.js) — Manual publish trigger
-- [src/app/api/plan/route.js](./src/app/api/plan/route.js) — Monthly plan CRUD
-- [src/app/api/stats/route.js](./src/app/api/stats/route.js) — Dashboard statistics
-- [src/app/api/cron/route.js](./src/app/api/cron/route.js) — Auto-publish & analytics sync
-- [src/lib/ai/text-generator.js](./src/lib/ai/text-generator.js) — Groq SDK integration with token logging
-- [src/lib/ai/image-generator.js](./src/lib/ai/image-generator.js) — Pollinations AI with negative prompts
-- [src/lib/platforms/facebook.js](./src/lib/platforms/facebook.js) — Facebook Graph API (text + image posts)
-- [src/lib/platforms/instagram.js](./src/lib/platforms/instagram.js) — Instagram Graph API (container → publish)
-- [src/lib/db.js](./src/lib/db.js) — Hybrid SQLite/Postgres data adapter
-- [src/lib/n8n.js](./src/lib/n8n.js) — n8n webhook client with smart fallbacks
-- [src/components/Sidebar.js](./src/components/Sidebar.js) — Navigation with live connection status
-- [src/components/Toast.js](./src/components/Toast.js) — Toast notification system
+- [src/](./src/)
+  - [app/](./src/app/) — Next.js App Router (Pages and APIs)
+    - [api/](./src/app/api/) — Backend API Endpoints
+      - [auth/](./src/app/api/auth/) — OAuth & Authentication
+        - [disconnect/route.js](./src/app/api/auth/disconnect/route.js) — Disconnect Facebook/Instagram token
+        - [facebook/route.js](./src/app/api/auth/facebook/route.js) — Facebook OAuth login & callback handler
+        - [instagram/route.js](./src/app/api/auth/instagram/route.js) — Instagram OAuth login & callback handler
+      - [content/route.js](./src/app/api/content/route.js) — CRUD endpoint for managing posts
+      - [cron/route.js](./src/app/api/cron/route.js) — Auto-publishing & analytics background sync cron
+      - [generate/](./src/app/api/generate/) — AI Generation Endpoints
+        - [image/route.js](./src/app/api/generate/image/route.js) — Pollinations AI image creation
+        - [text/route.js](./src/app/api/generate/text/route.js) — Groq LLaMA text generation
+      - [plan/route.js](./src/app/api/plan/route.js) — CRUD endpoint for monthly plans
+      - [publish/route.js](./src/app/api/publish/route.js) — Direct post publishing engine (Facebook & Instagram)
+      - [stats/route.js](./src/app/api/stats/route.js) — Analytics & performance statistics
+    - [approve/page.js](./src/app/approve/page.js) — Post approval queue & scheduler dashboard
+    - [calendar/page.js](./src/app/calendar/page.js) — Visual interactive posts calendar
+    - [compose/page.js](./src/app/compose/page.js) — AI-assisted post composer (4-step wizard)
+    - [data-deletion/page.js](./src/app/data-deletion/page.js) — Meta compliance user data deletion callback instructions
+    - [edit/\[id\]/page.js](./src/app/edit/%5Bid%5D/page.js) — Post editor page
+    - [plan/page.js](./src/app/plan/page.js) — Monthly content ideas & theme planner
+    - [privacy/page.js](./src/app/privacy/page.js) — Public Privacy Policy page for Meta app review compliance
+    - [settings/page.js](./src/app/settings/page.js) — API configurations, keys & OAuth connection dashboard
+    - [page.js](./src/app/page.js) — Main dashboard with active tabs for published & scheduled posts
+  - [components/](./src/components/) — Shared UI Components
+    - [Sidebar.js](./src/components/Sidebar.js) — Left-side global navigation bar with connection status
+    - [Toast.js](./src/components/Toast.js) — Global toast notification bubble system
+  - [lib/](./src/lib/) — Backend Core Helpers & Utilities
+    - [ai/](./src/lib/ai/) — AI Engines
+      - [image-generator.js](./src/lib/ai/image-generator.js) — Pollinations AI controller with negative prompts
+      - [text-generator.js](./src/lib/ai/text-generator.js) — Groq SDK client with automated models fallback
+    - [platforms/](./src/lib/platforms/) — Meta APIs Integration
+      - [facebook.js](./src/lib/platforms/facebook.js) — Facebook Graph SDK wrapper for pages posting
+      - [instagram.js](./src/lib/platforms/instagram.js) — Instagram Business API wrapper for photo containers & publishing
+    - [db.js](./src/lib/db.js) — Multi-tier hybrid database interface (better-sqlite3 + pg)
+    - [n8n.js](./src/lib/n8n.js) — n8n workflows webhook integration helper
+- [package.json](./package.json) — Node.js package manifests, dependencies & run scripts
+- [vercel.json](./vercel.json) — Vercel production hosting & cron schedules setup configuration
+- [next.config.mjs](./next.config.mjs) — Next.js configuration rules
+- [.env.local](./.env.local) — Local development environment variables configuration template
 
 ---
 
