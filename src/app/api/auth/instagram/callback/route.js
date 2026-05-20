@@ -16,8 +16,8 @@ export async function GET(request) {
     return NextResponse.redirect(new URL('/settings?error=instagram_auth_failed&detail=No+authorization+code+received', request.url));
   }
 
-  const appId = process.env.INSTAGRAM_APP_ID;
-  const appSecret = process.env.INSTAGRAM_APP_SECRET;
+  const appId = process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID;
+  const appSecret = process.env.INSTAGRAM_APP_SECRET || process.env.FACEBOOK_APP_SECRET;
   // Derive redirect_uri from the actual request URL — this ALWAYS matches what was sent in the dialog
   const callbackUrl = new URL(request.url);
   const redirectUri = `${callbackUrl.protocol}//${callbackUrl.host}/api/auth/instagram/callback`;

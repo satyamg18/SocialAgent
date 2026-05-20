@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   const appId = process.env.FACEBOOK_APP_ID;
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const redirectUri = `${baseUrl}/api/auth/facebook/callback`;
+  const requestUrl = new URL(request.url);
+  const redirectUri = `${requestUrl.protocol}//${requestUrl.host}/api/auth/facebook/callback`;
 
   if (!appId) {
     return NextResponse.json({ error: 'FACEBOOK_APP_ID is not configured in .env.local' }, { status: 400 });

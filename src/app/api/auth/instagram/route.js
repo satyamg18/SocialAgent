@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
-  const appId = process.env.INSTAGRAM_APP_ID;
-  const baseUrl = (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
+  const appId = process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID;
+  const requestUrl = new URL(request.url);
+  const redirectUri = `${requestUrl.protocol}//${requestUrl.host}/api/auth/instagram/callback`;
 
   if (!appId) {
-    return NextResponse.json({ error: 'INSTAGRAM_APP_ID is not configured in .env.local' }, { status: 400 });
+    return NextResponse.json({ error: 'Neither INSTAGRAM_APP_ID nor FACEBOOK_APP_ID is configured in environment variables.' }, { status: 400 });
   }
 
   const state = Math.random().toString(36).substring(7);
