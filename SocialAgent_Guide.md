@@ -116,3 +116,8 @@ To make this app work, you must create an App in the **Meta Developer Portal**.
 - **"Unknown Error" when publishing:** Check your Vercel Logs. Usually, this means your Facebook Page Access Token expired, or your Instagram account isn't properly linked to your Facebook Page in Meta Business Suite.
 - **Posts aren't auto-publishing:** Ensure your GitHub Actions workflow ([auto-publish.yml](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/.github/workflows/auto-publish.yml)) is enabled and running. Also verify `CRON_SECRET` matches between GitHub Secrets and Vercel Env Vars.
 - **OAuth Callback failing on localhost:** Ensure `NEXT_PUBLIC_APP_URL` in [.env.local](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/.env.local) is exactly `http://localhost:3000` with **no trailing slash**.
+- **"No Facebook Pages found" or Page name not updating:** 
+  1. The app caches the Page Name at connection time. To update it (e.g. after renaming your Facebook page), click **Disconnect** on the Settings page, and then click **Connect** again.
+  2. If it still says "No Facebook Pages found", verify if your Page is owned by a **Meta Business Portfolio**. The app requires the `business_management` permission scope to see Pages managed inside Business Suite.
+  3. If permissions get cached or desynced, remove the app integration at [facebook.com/settings?tab=business_tools](https://www.facebook.com/settings?tab=business_tools), then try connecting again to prompt a clean authorization dialog.
+

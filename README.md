@@ -54,6 +54,7 @@ All key directory and file links are linked to their absolute paths:
 - [src/app/data-deletion/page.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/data-deletion/page.js) — Data Deletion Instructions (Meta compliance)
 - [src/app/api/auth/facebook/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/auth/facebook/route.js) — Facebook OAuth flow (init + callback)
 - [src/app/api/auth/instagram/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/auth/instagram/route.js) — Instagram OAuth flow (init + callback)
+- [src/app/api/auth/disconnect/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/auth/disconnect/route.js) — Disconnect Facebook/Instagram connection endpoint
 - [src/app/api/generate/text/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/generate/text/route.js) — AI text generation endpoint
 - [src/app/api/generate/image/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/generate/image/route.js) — AI image generation endpoint
 - [src/app/api/content/route.js](file:///C:/Users/satya/OneDrive%20-%20Shiv%20Nadar%20Institution%20of%20Eminence/project/socialagent/src/app/api/content/route.js) — CRUD for posts

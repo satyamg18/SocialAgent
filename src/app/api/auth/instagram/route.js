@@ -21,7 +21,7 @@ export async function GET(request) {
   // pages_show_list: To see which Facebook pages the user manages
   // instagram_basic: To read the IG account info connected to the page
   // instagram_content_publish: To actually publish the posts
-  authUrl.searchParams.append('scope', 'instagram_basic,instagram_content_publish,pages_show_list');
+  authUrl.searchParams.append('scope', 'instagram_basic,instagram_content_publish,pages_show_list,business_management');
   authUrl.searchParams.append('response_type', 'code');
 
   return NextResponse.redirect(authUrl.toString());

@@ -43,6 +43,26 @@ function SettingsContent() {
     }
   }, []);
 
+  const handleDisconnect = async (platform) => {
+    if (!confirm(`Are you sure you want to disconnect ${platform === 'facebook' ? 'Facebook' : 'Instagram'}?`)) return;
+    try {
+      const res = await fetch('/api/auth/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platform }),
+      });
+      if (res.ok) {
+        addToast(`${platform === 'facebook' ? 'Facebook' : 'Instagram'} disconnected!`, 'success');
+        fetchConnections();
+      } else {
+        const data = await res.json();
+        addToast(`Failed to disconnect: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (e) {
+      addToast(e.message, 'error');
+    }
+  };
+
   useEffect(() => {
     fetchConnections();
   }, [fetchConnections]);
@@ -74,9 +94,18 @@ function SettingsContent() {
                 </div>
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               {connections.facebook ? (
-                <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
+                <>
+                  <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
+                  <button 
+                    className="btn btn-ghost btn-sm" 
+                    onClick={() => handleDisconnect('facebook')}
+                    style={{ padding: '6px 10px', fontSize: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }}
+                  >
+                    Disconnect
+                  </button>
+                </>
               ) : (
                 <a
                   className="btn btn-secondary"
@@ -103,9 +132,18 @@ function SettingsContent() {
                 </div>
               </div>
             </div>
-            <div>
+            <div className="flex items-center gap-2">
               {connections.instagram ? (
-                <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
+                <>
+                  <span className="status-badge approved"><span className="status-dot"></span> Connected</span>
+                  <button 
+                    className="btn btn-ghost btn-sm" 
+                    onClick={() => handleDisconnect('instagram')}
+                    style={{ padding: '6px 10px', fontSize: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }}
+                  >
+                    Disconnect
+                  </button>
+                </>
               ) : (
                 <a
                   className="btn btn-secondary"

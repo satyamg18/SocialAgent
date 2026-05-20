@@ -16,7 +16,7 @@ export async function GET(request) {
   authUrl.searchParams.append('client_id', appId);
   authUrl.searchParams.append('redirect_uri', redirectUri);
   authUrl.searchParams.append('state', state);
-  authUrl.searchParams.append('scope', 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata');
+  authUrl.searchParams.append('scope', 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata,business_management');
   authUrl.searchParams.append('response_type', 'code');
 
 

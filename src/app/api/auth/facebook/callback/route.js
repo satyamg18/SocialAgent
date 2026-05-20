@@ -44,20 +44,28 @@ export async function GET(request) {
       `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`
     );
     const longTokenData = await longTokenResponse.json();
+    // Use the long-lived token
     const userToken = longTokenData.access_token || shortLivedToken;
     const expiresIn = longTokenData.expires_in || 5184000;
     const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
+    // DEBUG: Fetch the logged-in user's profile to see who actually connected
+    const meResponse = await fetch(`https://graph.facebook.com/v19.0/me?fields=id,name,email&access_token=${userToken}`);
+    const meData = await meResponse.json();
+    console.log('[FB Auth Debug] Logged-in User Profile:', JSON.stringify(meData));
+
     // 3. Fetch the Facebook Pages the user manages
     const pagesResponse = await fetch(`https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}`);
     const pagesData = await pagesResponse.json();
+
+    console.log('[FB Auth Debug] Pages API Raw Response:', JSON.stringify(pagesData));
 
     if (pagesData.error) {
       throw new Error(`Pages API: ${pagesData.error.message}`);
     }
 
     if (!pagesData.data || pagesData.data.length === 0) {
-      throw new Error('No Facebook Pages found. Create a Facebook Page first, then reconnect.');
+      throw new Error(`No Facebook Pages found for user ${meData.name} (${meData.id}). Make sure you are logged in as the Page Admin and have granted permissions in the popup.`);
     }
 
     // Use the first page (user can change later)
