@@ -2,7 +2,7 @@
 
 An autonomous, AI-powered social media manager built with Next.js. The agent handles content generation, visual assets, intelligent scheduling, automated publishing, and engagement tracking across **Facebook** and **Instagram**.
 
-**Live Demo:** [https://social-media-agent-nine.vercel.app](https://social-media-agent-nine.vercel.app)
+**Live Demo:** [https://social-media-agent.vercel.app](https://social-media-agent.vercel.app)
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
