@@ -156,6 +156,26 @@ function SettingsContent() {
               )}
             </div>
           </div>
+
+          {/* Scopes tip */}
+          <div style={{
+            marginTop: '20px',
+            padding: '14px 18px',
+            background: 'var(--accent-primary-soft)',
+            border: '1px solid var(--border-accent)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.85rem',
+            color: 'var(--text-primary)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+            lineHeight: '1.5'
+          }}>
+            <span style={{ fontSize: '1.2rem', marginTop: '-2px' }}>💡</span>
+            <div>
+              <strong>Engagement metrics incomplete?</strong> If comments or impressions are not showing up for your platforms, please disconnect and reconnect both Facebook and Instagram to authorize the required insights permissions.
+            </div>
+          </div>
         </div>
       </div>
 

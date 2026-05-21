@@ -19,9 +19,16 @@ export async function GET(request) {
 
   const appId = process.env.FACEBOOK_APP_ID;
   const appSecret = process.env.FACEBOOK_APP_SECRET;
-  // Derive redirect_uri from the actual request URL — this ALWAYS matches what was sent in the dialog
-  const callbackUrl = new URL(request.url);
-  const redirectUri = `${callbackUrl.protocol}//${callbackUrl.host}/api/auth/facebook/callback`;
+  let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (baseUrl) {
+    baseUrl = baseUrl.replace(/\/+$/, '');
+  } else {
+    const callbackUrl = new URL(request.url);
+    const host = request.headers.get('x-forwarded-host') || callbackUrl.host;
+    const proto = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    baseUrl = `${proto}://${host}`;
+  }
+  const redirectUri = `${baseUrl}/api/auth/facebook/callback`;
 
   console.log('[FB Auth] Redirect URI used:', redirectUri);
 
@@ -84,6 +91,35 @@ export async function GET(request) {
       user_name: pageName,
       expires_at: expiresAt,
     });
+
+    // Check if an Instagram Business account is connected to this Page, and if so, auto-connect it
+    try {
+      const igResponse = await fetch(
+        `https://graph.facebook.com/v19.0/${pageId}?fields=instagram_business_account&access_token=${pageAccessToken}`
+      );
+      const igData = await igResponse.json();
+
+      if (igData.instagram_business_account) {
+        const igAccountId = igData.instagram_business_account.id;
+        const usernameResponse = await fetch(
+          `https://graph.facebook.com/v19.0/${igAccountId}?fields=username&access_token=${pageAccessToken}`
+        );
+        const usernameData = await usernameResponse.json();
+        const igUsername = usernameData.username;
+
+        console.log('[FB Auth Callback] Auto-connecting Instagram account:', igUsername, igAccountId);
+        
+        await upsertToken('instagram', {
+          access_token: pageAccessToken,
+          refresh_token: null,
+          user_id: igAccountId,
+          user_name: `@${igUsername}`,
+          expires_at: expiresAt,
+        });
+      }
+    } catch (igErr) {
+      console.warn('[FB Auth Callback] Failed to auto-connect Instagram:', igErr.message);
+    }
 
     return NextResponse.redirect(new URL('/settings?success=facebook_connected', request.url));
 

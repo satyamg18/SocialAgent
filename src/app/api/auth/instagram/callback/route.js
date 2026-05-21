@@ -19,8 +19,16 @@ export async function GET(request) {
   const appId = process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID;
   const appSecret = process.env.INSTAGRAM_APP_SECRET || process.env.FACEBOOK_APP_SECRET;
   // Derive redirect_uri from the actual request URL — this ALWAYS matches what was sent in the dialog
-  const callbackUrl = new URL(request.url);
-  const redirectUri = `${callbackUrl.protocol}//${callbackUrl.host}/api/auth/instagram/callback`;
+  let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (baseUrl) {
+    baseUrl = baseUrl.replace(/\/+$/, '');
+  } else {
+    const callbackUrl = new URL(request.url);
+    const host = request.headers.get('x-forwarded-host') || callbackUrl.host;
+    const proto = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    baseUrl = `${proto}://${host}`;
+  }
+  const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
 
   console.log('[IG Auth] Redirect URI used:', redirectUri);
 
@@ -67,7 +75,7 @@ export async function GET(request) {
 
     for (const page of pagesData.data) {
       const igResponse = await fetch(
-        `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${accessToken}`
+        `https://graph.facebook.com/v19.0/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`
       );
       const igData = await igResponse.json();
 
@@ -76,7 +84,7 @@ export async function GET(request) {
         pageAccessToken = page.access_token;
 
         const usernameResponse = await fetch(
-          `https://graph.facebook.com/v19.0/${igAccountId}?fields=username&access_token=${accessToken}`
+          `https://graph.facebook.com/v19.0/${igAccountId}?fields=username&access_token=${page.access_token}`
         );
         const usernameData = await usernameResponse.json();
         igUsername = usernameData.username;

@@ -2,8 +2,16 @@ import { NextResponse } from 'next/server';
 
 export async function GET(request) {
   const appId = process.env.INSTAGRAM_APP_ID || process.env.FACEBOOK_APP_ID;
-  const requestUrl = new URL(request.url);
-  const redirectUri = `${requestUrl.protocol}//${requestUrl.host}/api/auth/instagram/callback`;
+  let baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (baseUrl) {
+    baseUrl = baseUrl.replace(/\/+$/, '');
+  } else {
+    const requestUrl = new URL(request.url);
+    const host = request.headers.get('x-forwarded-host') || requestUrl.host;
+    const proto = host.includes('localhost') || host.includes('127.0.0.1') ? 'http' : 'https';
+    baseUrl = `${proto}://${host}`;
+  }
+  const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
 
   if (!appId) {
     return NextResponse.json({ error: 'Neither INSTAGRAM_APP_ID nor FACEBOOK_APP_ID is configured in environment variables.' }, { status: 400 });
@@ -17,11 +25,8 @@ export async function GET(request) {
   authUrl.searchParams.append('redirect_uri', redirectUri);
   authUrl.searchParams.append('state', state);
   
-  // Scopes needed to post to Instagram on behalf of the user
-  // pages_show_list: To see which Facebook pages the user manages
-  // instagram_basic: To read the IG account info connected to the page
-  // instagram_content_publish: To actually publish the posts
-  authUrl.searchParams.append('scope', 'instagram_basic,instagram_content_publish,pages_show_list,business_management');
+  // Requested scopes include both Facebook Page management, insights, and Instagram access
+  authUrl.searchParams.append('scope', 'pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_metadata,read_insights,business_management,instagram_basic,instagram_content_publish,instagram_manage_insights');
   authUrl.searchParams.append('response_type', 'code');
 
   return NextResponse.redirect(authUrl.toString());

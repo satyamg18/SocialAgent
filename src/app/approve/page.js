@@ -313,20 +313,57 @@ export default function ApprovePage() {
                 </div>
 
                 {/* Engagement (for published posts) */}
-                {post.status === 'published' && (post.likes > 0 || post.comments > 0 || post.impressions > 0) && (
+                {post.status === 'published' && (
                   <div style={{
-                    display: 'flex',
-                    gap: '16px',
                     marginTop: '16px',
-                    padding: '12px 16px',
+                    padding: '16px',
                     background: 'var(--bg-secondary)',
                     borderRadius: 'var(--radius-md)',
-                    fontSize: '0.85rem',
-                    color: 'var(--text-secondary)',
+                    border: '1px solid var(--border-subtle)',
                   }}>
-                    <span>❤️ {post.likes || 0} likes</span>
-                    <span>💬 {post.comments || 0} comments</span>
-                    <span>👁️ {post.impressions || 0} impressions</span>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
+                      📈 Performance Analytics
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                      {(post.facebook_post_id || post.platform === 'facebook' || post.platform === 'both') && (
+                        <div style={{ padding: '12px', background: 'rgba(24, 119, 242, 0.04)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(24, 119, 242, 0.12)' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--facebook-color)', fontSize: '0.82rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>📘</span> Facebook
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div>❤️ {post.fb_likes || 0} likes</div>
+                            <div>💬 {post.fb_comments || 0} comments</div>
+                            <div>👁️ {post.fb_impressions || 0} impressions</div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {(post.instagram_post_id || post.platform === 'instagram' || post.platform === 'both') && (
+                        <div style={{ padding: '12px', background: 'rgba(225, 48, 108, 0.04)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(225, 48, 108, 0.12)' }}>
+                          <div style={{ fontWeight: 600, color: '#e1306c', fontSize: '0.82rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>📷</span> Instagram
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div>❤️ {post.ig_likes || 0} likes</div>
+                            <div>💬 {post.ig_comments || 0} comments</div>
+                            <div>👁️ {post.ig_impressions || 0} impressions</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {(post.facebook_post_id && post.instagram_post_id) && (
+                        <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.04)', borderRadius: 'var(--radius-md)', border: '1px solid rgba(99, 102, 241, 0.12)' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--accent-primary)', fontSize: '0.82rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>🌐</span> Combined Total
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div>❤️ {post.likes || 0} likes</div>
+                            <div>💬 {post.comments || 0} comments</div>
+                            <div>👁️ {post.impressions || 0} impressions</div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

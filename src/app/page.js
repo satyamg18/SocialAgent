@@ -10,8 +10,29 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [postFilter, setPostFilter] = useState('unpublished');
   const [publishing, setPublishing] = useState({}); // { [postId]: true }
+  const [syncing, setSyncing] = useState(false);
 
   const addToast = useToast();
+
+  async function handleSyncAnalytics() {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/analytics/sync', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.success) {
+        addToast(data.message || 'Metrics synced successfully! 📊', 'success');
+        await refreshData();
+      } else {
+        addToast(`Sync failed: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const refreshData = useCallback(async () => {
     try {
@@ -95,9 +116,9 @@ export default function DashboardPage() {
     { label: 'Pending Approval', value: stats?.stats?.pending || 0, icon: '⏳' },
     { label: 'Published', value: stats?.stats?.published || 0, icon: '🚀' },
     { label: 'Drafts', value: stats?.stats?.draft || 0, icon: '📄' },
-    { label: 'Total Likes', value: stats?.stats?.engagement?.likes || 0, icon: '❤️' },
-    { label: 'Total Comments', value: stats?.stats?.engagement?.comments || 0, icon: '💬' },
-    { label: 'Impressions', value: stats?.stats?.engagement?.impressions || 0, icon: '👁️' },
+    { label: 'Total Likes', value: stats?.stats?.engagement?.likes || 0, icon: '❤️', hasBreakdown: true, fbValue: stats?.stats?.engagement?.fb_likes || 0, igValue: stats?.stats?.engagement?.ig_likes || 0 },
+    { label: 'Total Comments', value: stats?.stats?.engagement?.comments || 0, icon: '💬', hasBreakdown: true, fbValue: stats?.stats?.engagement?.fb_comments || 0, igValue: stats?.stats?.engagement?.ig_comments || 0 },
+    { label: 'Impressions', value: stats?.stats?.engagement?.impressions || 0, icon: '👁️', hasBreakdown: true, fbValue: stats?.stats?.engagement?.fb_impressions || 0, igValue: stats?.stats?.engagement?.ig_impressions || 0 },
   ];
 
   return (
@@ -108,6 +129,14 @@ export default function DashboardPage() {
           <p className="page-subtitle">Your social media command center</p>
         </div>
         <div className="page-actions">
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleSyncAnalytics} 
+            disabled={syncing}
+            id="btn-sync-analytics"
+          >
+            {syncing ? '🔄 Syncing...' : '🔄 Sync Analytics'}
+          </button>
           <Link href="/compose" className="btn btn-primary" id="btn-new-post">
             ✍️ New Post
           </Link>
@@ -124,6 +153,25 @@ export default function DashboardPage() {
             <span className="stat-icon">{stat.icon}</span>
             <div className="stat-label">{stat.label}</div>
             <div className="stat-value">{stat.value}</div>
+            {stat.hasBreakdown && (
+              <div style={{ 
+                fontSize: '0.78rem', 
+                color: 'var(--text-secondary)', 
+                marginTop: '8px', 
+                display: 'flex', 
+                gap: '8px', 
+                borderTop: '1px solid var(--border-subtle)', 
+                paddingTop: '6px' 
+              }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>📘</span> {stat.fbValue}
+                </span>
+                <span style={{ color: 'var(--border-medium)' }}>|</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span>📷</span> {stat.igValue}
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -232,10 +280,24 @@ export default function DashboardPage() {
                     {post.status.replace('_', ' ')}
                   </span>
                   
-                  {post.status === 'published' && (post.likes > 0 || post.comments > 0) && (
-                    <span className="status-badge" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--status-failed)', marginLeft: '8px', border: 'none' }}>
-                      ❤️ {post.likes || 0} &nbsp; 💬 {post.comments || 0}
-                    </span>
+                  {post.status === 'published' && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px', width: '100%' }}>
+                      {(post.facebook_post_id || post.platform === 'facebook' || post.platform === 'both') && (
+                        <span className="status-badge" style={{ background: 'var(--facebook-soft)', color: 'var(--facebook-color)', border: 'none' }}>
+                          📘 FB: ❤️ {post.fb_likes || 0} &nbsp; 💬 {post.fb_comments || 0} &nbsp; 👁️ {post.fb_impressions || 0}
+                        </span>
+                      )}
+                      {(post.instagram_post_id || post.platform === 'instagram' || post.platform === 'both') && (
+                        <span className="status-badge" style={{ background: 'var(--instagram-soft)', color: '#e1306c', border: 'none' }}>
+                          📷 IG: ❤️ {post.ig_likes || 0} &nbsp; 💬 {post.ig_comments || 0} &nbsp; 👁️ {post.ig_impressions || 0}
+                        </span>
+                      )}
+                      {(post.facebook_post_id && post.instagram_post_id) && (
+                        <span className="status-badge" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--accent-primary)', border: 'none' }}>
+                          🌐 Total: ❤️ {post.likes || 0} &nbsp; 💬 {post.comments || 0} &nbsp; 👁️ {post.impressions || 0}
+                        </span>
+                      )}
+                    </div>
                   )}
 
                   <div style={{ width: '100%', marginTop: '8px', display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>

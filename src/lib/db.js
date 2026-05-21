@@ -89,6 +89,14 @@ async function initPostgresTables(pool) {
       comments INTEGER DEFAULT 0,
       shares INTEGER DEFAULT 0,
       impressions INTEGER DEFAULT 0,
+      fb_likes INTEGER DEFAULT 0,
+      fb_comments INTEGER DEFAULT 0,
+      fb_shares INTEGER DEFAULT 0,
+      fb_impressions INTEGER DEFAULT 0,
+      ig_likes INTEGER DEFAULT 0,
+      ig_comments INTEGER DEFAULT 0,
+      ig_shares INTEGER DEFAULT 0,
+      ig_impressions INTEGER DEFAULT 0,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -113,6 +121,14 @@ async function initPostgresTables(pool) {
   try { await pool.query('ALTER TABLE posts ADD COLUMN comments INTEGER DEFAULT 0;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN shares INTEGER DEFAULT 0;'); } catch (e) {}
   try { await pool.query('ALTER TABLE posts ADD COLUMN impressions INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN fb_likes INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN fb_comments INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN fb_shares INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN fb_impressions INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN ig_likes INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN ig_comments INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN ig_shares INTEGER DEFAULT 0;'); } catch (e) {}
+  try { await pool.query('ALTER TABLE posts ADD COLUMN ig_impressions INTEGER DEFAULT 0;'); } catch (e) {}
 }
 
 function initSqliteTables(db) {
@@ -130,6 +146,8 @@ function initSqliteTables(db) {
       status TEXT NOT NULL DEFAULT 'draft', scheduled_date TEXT, scheduled_time TEXT, plan_id INTEGER REFERENCES monthly_plans(id),
       facebook_post_id TEXT, instagram_post_id TEXT, published_at DATETIME,
       likes INTEGER DEFAULT 0, comments INTEGER DEFAULT 0, shares INTEGER DEFAULT 0, impressions INTEGER DEFAULT 0,
+      fb_likes INTEGER DEFAULT 0, fb_comments INTEGER DEFAULT 0, fb_shares INTEGER DEFAULT 0, fb_impressions INTEGER DEFAULT 0,
+      ig_likes INTEGER DEFAULT 0, ig_comments INTEGER DEFAULT 0, ig_shares INTEGER DEFAULT 0, ig_impressions INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS platform_tokens (
@@ -147,6 +165,14 @@ function initSqliteTables(db) {
   try { db.exec('ALTER TABLE posts ADD COLUMN comments INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN shares INTEGER DEFAULT 0;'); } catch (e) {}
   try { db.exec('ALTER TABLE posts ADD COLUMN impressions INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN fb_likes INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN fb_comments INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN fb_shares INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN fb_impressions INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN ig_likes INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN ig_comments INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN ig_shares INTEGER DEFAULT 0;'); } catch (e) {}
+  try { db.exec('ALTER TABLE posts ADD COLUMN ig_impressions INTEGER DEFAULT 0;'); } catch (e) {}
 }
 
 // === API Methods ===
@@ -267,7 +293,19 @@ export async function getPostStats() {
   const failed = (await executeQuery("SELECT COUNT(*) as count FROM posts WHERE status = 'failed'", [], 'get')).count;
   
   // Aggregate Engagement Metrics
-  const engagement = await executeQuery('SELECT SUM(likes) as total_likes, SUM(comments) as total_comments, SUM(impressions) as total_impressions FROM posts', [], 'get');
+  const engagement = await executeQuery(`
+    SELECT 
+      SUM(likes) as total_likes, 
+      SUM(comments) as total_comments, 
+      SUM(impressions) as total_impressions,
+      SUM(fb_likes) as fb_likes,
+      SUM(fb_comments) as fb_comments,
+      SUM(fb_impressions) as fb_impressions,
+      SUM(ig_likes) as ig_likes,
+      SUM(ig_comments) as ig_comments,
+      SUM(ig_impressions) as ig_impressions
+    FROM posts
+  `, [], 'get');
   
   const now = new Date();
   const monthStr = String(now.getMonth() + 1).padStart(2, '0');
@@ -288,7 +326,13 @@ export async function getPostStats() {
     engagement: {
       likes: parseInt(engagement?.total_likes || 0),
       comments: parseInt(engagement?.total_comments || 0),
-      impressions: parseInt(engagement?.total_impressions || 0)
+      impressions: parseInt(engagement?.total_impressions || 0),
+      fb_likes: parseInt(engagement?.fb_likes || 0),
+      fb_comments: parseInt(engagement?.fb_comments || 0),
+      fb_impressions: parseInt(engagement?.fb_impressions || 0),
+      ig_likes: parseInt(engagement?.ig_likes || 0),
+      ig_comments: parseInt(engagement?.ig_comments || 0),
+      ig_impressions: parseInt(engagement?.ig_impressions || 0),
     }
   };
 }
